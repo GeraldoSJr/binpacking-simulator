@@ -24,7 +24,7 @@ The value of the `operation` column can be one of three types: `insertion`, `del
 
 ## 🧠 Packing Heuristics
 
-The item allocation strategy implemented in this simulator are **First-Fit** and **Best-Fit**.
+The item allocation strategy implemented in this simulator are **First-Fit-Decreasing** and **Best-Fit-Decreasing**.
 
 ### First-Fit-Decreasing
 
@@ -50,7 +50,7 @@ When a new set of items needs to be allocated, the heuristic works as follows:
     c. Place the item into that bin.
     d. If no existing bin can accommodate the item, create a new bin and place the item there.
 
-This approach follows a different placement strategy from First-Fit, focusing on selecting the bin that will be left with the least remaining capacity after each allocation. It can lead to different packing patterns and may be preferable in scenarios where tighter local utilization of individual bins is desired.
+This approach follows a different placement strategy from First-Fit-Decreasing, focusing on selecting the bin that will be left with the least remaining capacity after each allocation. It can lead to different packing patterns and may be preferable in scenarios where tighter local utilization of individual bins is desired.
 
 ## 🔄 Repacking Heuristics
 
@@ -107,7 +107,7 @@ Examples:
 # Minimal run
 go run . input.csv
 
-# Best-Fit with timestamp-based repacking
+# Best-Fit-Decreasing with timestamp-based repacking
 go run . input.csv -Heuristic=bestfit -EventBased=false
 
 # Custom capacities and threshold
