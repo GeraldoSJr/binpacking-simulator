@@ -26,24 +26,31 @@ The value of the `operation` column can be one of three types: `insertion`, `del
 
 The item allocation strategy implemented in this simulator are **First-Fit** and **Best-Fit**.
 
-### First-Fit
+### First-Fit-Decreasing
 
-When a new item needs to be allocated, the heuristic works as follows:
+When a new set of items needs to be allocated, the heuristic works as follows:
 
-1. It iterates through the existing bins in the order they were created.
-2. It allocates the item to the **first bin** that has sufficient space.
-3. If no existing bin has the capacity for the item, a new bin is created to place it.
+1. Sort the items once at the start in descending order by CPU size, using memory as a tiebreaker.
+2. For each item in that sorted list (in order):
+    a. Iterate through the existing bins in the order they were created.
+    b. Place the item into the first bin that has sufficient remaining capacity.
+    c. If no existing bin can accommodate the item, create a new bin and place the item there.
 
 It is a simple, fast heuristic that serves as an excellent baseline for comparison with more complex strategies.
 
-### Best-Fit
+### Best-Fit-Decreasing
 
-When a new item needs to be allocated, the heuristic works as follows:
+When a new set of items needs to be allocated, the heuristic works as follows:
 
-1. It places the item on the bin that has less remaining capacity while still supports it.
-2. If no existing bin has the capacity for the item, a new bin is created to place it.
+1. Sort the items once at the start in descending order by CPU size, using memory as a tiebreaker.
 
-This approach tends to minimize wasted space, often leading to tighter packings. However, it is slightly more computationally expensive than First-Fit, since it must examine all bins before making a decision.
+2. For each item in the sorted list:
+    a. Examine all existing bins and identify those that can accommodate the item.
+    b. Among these, select the bin with the least remaining capacity after placing the item.
+    c. Place the item into that bin.
+    d. If no existing bin can accommodate the item, create a new bin and place the item there.
+
+This approach follows a different placement strategy from First-Fit, focusing on selecting the bin that will be left with the least remaining capacity after each allocation. It can lead to different packing patterns and may be preferable in scenarios where tighter local utilization of individual bins is desired.
 
 ## 🔄 Repacking Heuristics
 
