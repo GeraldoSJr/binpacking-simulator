@@ -14,15 +14,13 @@ import (
 )
 
 func main() {
-	// Default parameter values
+	// Default parameter values (CPU and memory defaults are derived from input)
 	var (
-		defCPU          int64   = 16           // bin cpu capacity
-		defMem          int64   = 16           // bin memory capacity
-		defBinMin       float64 = 0.70         // defines the bin occupation limit lower bound (bins less tam x% are selected for repacking)
-		defRepack       bool    = true         // toggles repacking
-		defEventBased   bool    = true         // toggles event-based repacking: true -> event based repacking, false -> timestamp based repacking
-		defHeuristic    string  = "firstfit"   // options: 'firstfit' or 'bestfit'
-		defRepackHeur   string  = "r1"         // options: 'r1' or 'optimal'
+		defBinMin     float64 = 0.70       // defines the bin occupation limit lower bound (bins less than x% are selected for repacking)
+		defRepack     bool    = true        // toggles repacking
+		defEventBased bool    = true        // toggles event-based repacking: true -> event based repacking, false -> timestamp based repacking
+		defHeuristic  string  = "firstfit" // options: 'firstfit' or 'bestfit'
+		defRepackHeur string  = "r1"       // options: 'r1' or 'optimal'
 	)
 
 	// Initialize logger
@@ -37,8 +35,8 @@ func main() {
 	if len(os.Args) < 2 || os.Args[1][0] == '-' {
 		fmt.Fprintf(os.Stderr, "Usage: go run . <input.csv> [optional flags]\n")
 		fmt.Fprintf(os.Stderr, "Flags:\n")
-		fmt.Fprintf(os.Stderr, "  -CPUCapacity int64            (default 16)\n")
-		fmt.Fprintf(os.Stderr, "  -MemCapacity int64            (default 16)\n")
+		fmt.Fprintf(os.Stderr, "  -CPUCapacity int64            (default: max CPU value found in input)\n")
+		fmt.Fprintf(os.Stderr, "  -MemCapacity int64            (default: max memory value found in input)\n")
 		fmt.Fprintf(os.Stderr, "  -BinMinLimit float64          (default 0.70)\n")
 		fmt.Fprintf(os.Stderr, "  -RepackingEnabled bool        (default true)\n")
 		fmt.Fprintf(os.Stderr, "  -EventBased bool              (default true)\n")
@@ -48,6 +46,28 @@ func main() {
 		os.Exit(2)
 	}
 	var csvFilePath string = os.Args[1]
+
+	// Load events first so we can derive default CPU/memory capacities from the input
+	log.Info("loading CSV events", "file", csvFilePath)
+	var events []input.Event
+	events, err = input.LoadEventsFromCSV(csvFilePath)
+	if err != nil {
+		log.Error("could not load events", "file", csvFilePath)
+		fmt.Fprintf(os.Stderr, "FATAL ERROR: Could not process event file: %v. Check logs for more details.\n", err)
+		os.Exit(1)
+	}
+
+	// Derive default bin capacities from the maximum CPU and memory values across all events
+	var defCPU, defMem int64
+	for _, e := range events {
+		if e.CPU > defCPU {
+			defCPU = e.CPU
+		}
+		if e.Memory > defMem {
+			defMem = e.Memory
+		}
+	}
+	log.Info("derived default capacities from input", "default_cpu", defCPU, "default_mem", defMem)
 
 	// Define FlagSet for arguments appearing after <input.csv>
 	var fs = flag.NewFlagSet("alloc-sim", flag.ContinueOnError)
@@ -66,16 +86,6 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Usage: go run . <input.csv> [optional flags]\n")
 		log.Error("parameters parsing error", "error", err)
 		os.Exit(2)
-	}
-
-	// loading events from input file
-	log.Info("loading CSV events", "file", csvFilePath)
-	var events []input.Event
-	events, err = input.LoadEventsFromCSV(csvFilePath)
-	if err != nil {
-		log.Error("could not load events", "file", csvFilePath)
-		fmt.Fprintf(os.Stderr, "FATAL ERROR: Could not process event file: %v. Check logs for more details.\n", err)
-		os.Exit(1)
 	}
 
 	// Resolved values (flags or defaults)
