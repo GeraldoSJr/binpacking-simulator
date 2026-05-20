@@ -60,11 +60,11 @@ func main() {
 	// Derive default bin capacities from the maximum CPU and memory values across all events
 	var defCPU, defMem int64
 	for _, e := range events {
-		if e.CPU > defCPU {
-			defCPU = e.CPU
+		if e.Item.CPU > defCPU {
+			defCPU = e.Item.CPU
 		}
-		if e.Memory > defMem {
-			defMem = e.Memory
+		if e.Item.Memory > defMem {
+			defMem = e.Item.Memory
 		}
 	}
 	log.Info("derived default capacities from input", "default_cpu", defCPU, "default_mem", defMem)
